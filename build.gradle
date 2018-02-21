@@ -1,0 +1,74 @@
+apply plugin: 'java'
+
+// Declare Forge setup task. We'll add to this when the forge project is evaluated
+task setupForge() {
+}
+
+// Add run task generation
+task genRuns() {
+}
+
+// Declare setup task. Sets up Forge and generates run configs
+task setup() {
+	finalizedBy setupForge
+	finalizedBy genRuns
+}
+
+def addRunConfig(taskName, task) {
+	def runConfigurationsDir = new File(".idea/runConfigurations")
+	runConfigurationsDir.mkdirs()
+	new File("$rootDir/run").mkdirs()
+	
+	def mainClass = task.main
+	def props = task.systemProperties.collect { k, v -> "-D$k=$v" }.join(' ')
+	def args = task.args.join(" ")
+
+	def writer = new FileWriter(new File(runConfigurationsDir, "${taskName}.xml"))
+	def xml = new groovy.xml.MarkupBuilder(writer)
+
+	xml.component(name: "ProjectRunConfigurationManager") {
+		configuration(default: 'false', name: taskName, type: "Application", factoryName: "Application", singleton: "true") {
+			option(name: 'MAIN_CLASS_NAME', value: mainClass)
+			option(name: 'VM_PARAMETERS', value: props)
+			option(name: 'PROGRAM_PARAMETERS', value: args)
+			option(name: 'WORKING_DIRECTORY', value: 'file://$PROJECT_DIR$/run')
+			module(name: 'forge_main')
+		}
+	}
+}
+
+// Add idea to all projects and set up their output directories
+allprojects {
+	apply plugin: 'idea'
+	idea {
+		module {
+			inheritOutputDirs = false
+			outputDir = file("$rootDir/out/${project.name}/production")
+			testOutputDir = file("$rootDir/out/${project.name}/test")
+		}
+	}
+}
+
+// Make MAIL-Core depend on the API project
+project(":core") {
+	afterEvaluate {
+		dependencies {
+			compile project(":api")
+		}
+	}
+}
+
+// Make MAIL-Forge depend on the API&Core, add functionality to the setup task and create run config
+project(":forge") {
+	afterEvaluate {
+		dependencies {
+			compile project(":api")
+			compile project(":core")
+		}
+		
+		rootProject.setup.finalizedBy setupDecompWorkspace
+		rootProject.genRuns.doLast {
+			addRunConfig("Client", project(":forge").runClient)
+		}
+	}
+}

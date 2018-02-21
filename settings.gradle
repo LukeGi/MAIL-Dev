@@ -1,0 +1,10 @@
+rootProject.name = 'MAILDev'
+
+def addProject(name) {
+    include ":${name}"
+    project(":${name}").projectDir = file("projects/${name}")
+}
+
+addProject 'api'
+addProject 'core'
+addProject 'forge'

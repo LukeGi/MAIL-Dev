@@ -1,0 +1,9 @@
+[submodule "api"]
+	path = projects/api
+	url = https://github.com/TheMAILProject/MAIL-API.git
+[submodule "core"]
+	path = projects/core
+	url = https://github.com/TheMAILProject/MAIL-Core.git
+[submodule "forge"]
+	path = projects/forge
+	url = https://github.com/TheMAILProject/MAIL-Forge.git
